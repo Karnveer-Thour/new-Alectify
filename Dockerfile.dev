@@ -1,0 +1,14 @@
+FROM node:20.18.0 AS development
+WORKDIR /app
+# Install required dependencies (including Chromium)
+RUN apt-get update && apt-get install -y chromium
+# Set Puppeteer to use the system-installed Chromium
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+COPY package*.json ./
+# Install dependencies without downloading Chromium
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+RUN npm install
+COPY . .
+RUN npm run build
+EXPOSE 4001
+CMD ["npm", "run", "start:dev"]

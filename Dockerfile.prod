@@ -1,0 +1,25 @@
+FROM node:20.18.0 AS production 
+
+RUN apt-get update && \
+    apt-get install -y ffmpeg && \
+    apt-get install -y ffmpeg chromium && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+
+WORKDIR /app
+
+RUN npm install -g npm@10.8.2
+
+COPY *.json ./
+
+RUN npm install
+
+COPY . .
+
+RUN npm run build
+
+EXPOSE 4001
+
+CMD ["sh", "-c", "npx typeorm -d dist/db/data-source.js migration:run && node dist/main.js"]
