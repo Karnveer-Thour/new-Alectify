@@ -139,16 +139,15 @@ export class ContractManagementsController {
     @ApiOkResponse({
       type: ContractManagement
     })
-    @Patch('updateStatus/:id')
+    @Patch(':id/:status')
     updateStatus(
       @Req() req,
-      @Param('id') id: string,
-      @Body() UpdateContractManagementStatusDto:UpdateContractManagementStatusDto
+      @Param() { id, status }: UpdateContractManagementStatusDto,
     ){
       return this.contractManagementsService.updateStatus(
         id,
         req.user,
-        UpdateContractManagementStatusDto.status
+        status
       );
     }
 

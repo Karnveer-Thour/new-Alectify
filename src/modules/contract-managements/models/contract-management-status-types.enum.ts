@@ -1,4 +1,4 @@
-export enum StatusTypes {
+export enum ContractManagementStatusTypes {
   OPEN = 'OPEN',
   CLOSED = 'CLOSED',
 }

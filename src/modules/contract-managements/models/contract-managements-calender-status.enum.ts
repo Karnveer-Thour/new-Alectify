@@ -1,3 +1,3 @@
-export enum CalenderStatus {
+export enum ContractManagementCalenderStatus {
   DELAYED = 'DELAYED',
 }

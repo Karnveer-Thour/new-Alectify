@@ -10,7 +10,6 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { ContractManagementImportFilesDto } from './create-contract-management.dto';
-import { StatusTypes } from '../models/contract-management-status-types.enum';
 
 export class UpdateContractManagementDto {
   @ApiProperty()
@@ -28,11 +27,6 @@ export class UpdateContractManagementDto {
   @IsNumber()
   @Transform(({ value }) => parseFloat(value))
   contractAmount: number;
-
-  @ApiProperty()
-  @IsOptional()
-  @IsNumber()
-  status: StatusTypes;
 
   @ApiProperty()
   @IsOptional()

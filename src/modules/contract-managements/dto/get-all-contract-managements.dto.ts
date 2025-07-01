@@ -14,7 +14,7 @@ import { IPaginationLinks, IPaginationMeta } from 'nestjs-typeorm-paginate';
 import { ContractManagementResponseDto } from './create-contract-management-response.dto';
 import { ContractManagementsOrderFieldEnum } from '../models/contract-managements-order-field.enum';
 import { ContractManagementsSortOrderEnum } from '../models/contract-managements-sort-order.enum';
-import { StatusTypes } from '../models/contract-management-status-types.enum';
+import { ContractManagementStatusTypes    } from '../models/contract-management-status-types.enum';
 export class GetAllContractManagementsResponseDto extends BaseResponseDto {
   @ApiProperty()
   @IsObject()
@@ -69,14 +69,14 @@ export class GetAllContractManagementQueryDto {
   })
   @IsOptional()
   @IsString()
-  status: StatusTypes;
+  status: ContractManagementStatusTypes;
  
   @ApiProperty({
     required: false,
   })
   @IsOptional()
   @IsString()
-  eventStatus: StatusTypes;
+  eventStatus: ContractManagementStatusTypes;
 
   @ApiProperty({
     required: false,

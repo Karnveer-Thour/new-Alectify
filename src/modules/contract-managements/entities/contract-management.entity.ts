@@ -11,7 +11,7 @@ import {
   OneToMany,
 } from 'typeorm';
 import { ContractManagementDocument } from './contract-management-document.entity';
-import { StatusTypes } from '../models/contract-management-status-types.enum';
+import { ContractManagementStatusTypes } from '../models/contract-management-status-types.enum';
 
 @Entity('contract_managements')
 @Index(['project', 'organization', 'contactUser'])
@@ -52,10 +52,10 @@ export class ContractManagement extends BaseEntity<ContractManagement> {
   @Column({
     name: 'status',
     type:'enum',
-    enum:StatusTypes,
-    default: StatusTypes.OPEN,
+    enum:ContractManagementStatusTypes,
+    default: ContractManagementStatusTypes.OPEN,
   })
-  status: StatusTypes;
+  status: ContractManagementStatusTypes;
 
   @Column({ name: 'comments', type: 'text', nullable: true })
   comments: string;

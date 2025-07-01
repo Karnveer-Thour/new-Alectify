@@ -31,8 +31,8 @@ import { OperationApisWrapper } from 'modules/operation-apis/operation-apis-wrap
 import { Brackets } from 'typeorm';
 import { ContractManagementsSortOrderEnum } from './models/contract-managements-sort-order.enum';
 import { ContractManagementDocumentsService } from './contract-managements-documents.service';
-import { StatusTypes } from './models/contract-management-status-types.enum';
-import { CalenderStatus } from './models/contract-managements-calender-status.enum';
+import { ContractManagementStatusTypes } from './models/contract-management-status-types.enum';
+import { ContractManagementCalenderStatus } from './models/contract-managements-calender-status.enum';
 
 @Injectable()
 export class ContractManagementsService {
@@ -47,12 +47,12 @@ export class ContractManagementsService {
     private readonly operationApis: OperationApisWrapper,
   ) {}
 
- getEventStatus(endDate: Date): CalenderStatus | null {
+ getEventStatus(endDate: Date): ContractManagementCalenderStatus | null {
   const now = moment.utc();
   const contractEndDate = moment.utc(endDate);
 
   if (now.isAfter(contractEndDate)) {
-    return CalenderStatus.DELAYED;
+    return ContractManagementCalenderStatus.DELAYED;
   }
 
   return null;
@@ -230,12 +230,12 @@ export class ContractManagementsService {
             qb.where('organization.name ILIKE :search', {
               search: `%${search}%`,
             })
-              // .orWhere(
-              //   "CONCAT(contactUser.first_name, ' ', contactUser.last_name) ILIKE :search",
-              //   {
-              //     search: `%${search}%`,
-              //   },
-              // )
+              .orWhere(
+                "CONCAT(contactUser.first_name, ' ', contactUser.last_name) ILIKE :search",
+                {
+                  search: `%${search}%`,
+                },
+              )
               .orWhere('cm.comments ILIKE :search', {
                 search: `%${search}%`,
               })
@@ -297,14 +297,11 @@ export class ContractManagementsService {
         contract.endDate,
       );
 
-      const calculatedContract = {
-        ...contract,
-        eventStatus: this.getEventStatus(contract.endDate),
-      };
+      contract['eventStatus'] =  this.getEventStatus(contract.endDate);
 
       return {
         message: 'Get Contract successfully',
-        data: calculatedContract as any,
+        data: contract as any,
       };
     } catch (error) {
       throw error;
@@ -314,7 +311,7 @@ export class ContractManagementsService {
   async updateStatus(
     id: string,
     user: User,
-    status: StatusTypes,
+    status: ContractManagementStatusTypes,
   ): Promise<{ message: string; data: ContractManagement }> {
     try {
       const contractManagement =
