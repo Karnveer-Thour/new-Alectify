@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { FilesUploadService } from 'modules/files-upload/files-upload.service';
 import { OrganizationsService } from 'modules/organizations/organizations.service';
@@ -9,12 +10,14 @@ import { ProjectsService } from 'modules/projects/projects.service';
 import { UsersService } from 'modules/users/users.service';
 import { User } from 'modules/users/entities/user.entity';
 import { CreateContractManagementDto } from './dto/create-contract-management.dto';
-import { CreateContractManagementResponseDto } from './dto/create-contract-management-response.dto';
+import {
+  ContractManagementResponseDto,
+  CreateContractManagementResponseDto,
+} from './dto/create-contract-management-response.dto';
 import { dateToUTC } from '@common/utils/utils';
 import { ContractManagementsRepository } from './repositories/contract-managements.repository';
 import { ContractManagementDocumentsRepository } from './repositories/contract-management-documents.repository';
 import { ContractManagement } from './entities/contract-management.entity';
-import { Organization } from 'modules/organizations/entities/organization.entity';
 import { IPaginationOptions } from 'nestjs-typeorm-paginate';
 import {
   GetAllContractManagementsResponseDto,
@@ -28,6 +31,8 @@ import { OperationApisWrapper } from 'modules/operation-apis/operation-apis-wrap
 import { Brackets } from 'typeorm';
 import { ContractManagementsSortOrderEnum } from './models/contract-managements-sort-order.enum';
 import { ContractManagementDocumentsService } from './contract-managements-documents.service';
+import { StatusTypes } from './models/contract-management-status-types.enum';
+import { CalenderStatus } from './models/contract-managements-calender-status.enum';
 
 @Injectable()
 export class ContractManagementsService {
@@ -41,6 +46,17 @@ export class ContractManagementsService {
     private contractManagementDocumentsRepository: ContractManagementDocumentsRepository,
     private readonly operationApis: OperationApisWrapper,
   ) {}
+
+ getEventStatus(endDate: Date): CalenderStatus | null {
+  const now = moment.utc();
+  const contractEndDate = moment.utc(endDate);
+
+  if (now.isAfter(contractEndDate)) {
+    return CalenderStatus.DELAYED;
+  }
+
+  return null;
+}
 
   async create(
     user: User,
@@ -160,7 +176,7 @@ export class ContractManagementsService {
       const contractMangementRecords = this.contractManagementsRepository
         .createQueryBuilder('cm')
         .leftJoinAndSelect('cm.project', 'project')
-        .leftJoinAndSelect('cm.contactUser', 'contactUser')
+        // .leftJoinAndSelect('cm.contactUser', 'contactUser')
         .leftJoinAndSelect('cm.organization', 'organization')
         .leftJoinAndSelect(
           'cm.documents',
@@ -214,12 +230,12 @@ export class ContractManagementsService {
             qb.where('organization.name ILIKE :search', {
               search: `%${search}%`,
             })
-              .orWhere(
-                "CONCAT(contactUser.first_name, ' ', contactUser.last_name) ILIKE :search",
-                {
-                  search: `%${search}%`,
-                },
-              )
+              // .orWhere(
+              //   "CONCAT(contactUser.first_name, ' ', contactUser.last_name) ILIKE :search",
+              //   {
+              //     search: `%${search}%`,
+              //   },
+              // )
               .orWhere('cm.comments ILIKE :search', {
                 search: `%${search}%`,
               })
@@ -239,10 +255,13 @@ export class ContractManagementsService {
         .getManyAndCount();
 
       return {
-        data: data?.map((item) => ({
-          ...item,
-          term: this.calculateMonths(item.startDate, item.endDate),
-        })) as any,
+        data: data?.map((item) => {
+          return {
+            ...item,
+            term: this.calculateMonths(item.startDate, item.endDate),
+            eventStatus: this.getEventStatus(item.endDate),
+          };
+        }) as any,
         message: 'Get All Contract Records Successfully',
         meta: {
           currentPage: page,
@@ -278,9 +297,44 @@ export class ContractManagementsService {
         contract.endDate,
       );
 
+      const calculatedContract = {
+        ...contract,
+        eventStatus: this.getEventStatus(contract.endDate),
+      };
+
       return {
         message: 'Get Contract successfully',
-        data: contract as any,
+        data: calculatedContract as any,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async updateStatus(
+    id: string,
+    user: User,
+    status: StatusTypes,
+  ): Promise<{ message: string; data: ContractManagement }> {
+    try {
+      const contractManagement =
+        await this.contractManagementsRepository.findOne({
+          where: { id: id },
+          relations: ['contactUser'],
+        });
+      if (!contractManagement) {
+        throw new NotFoundException('Contract does not exist');
+      }
+      if (contractManagement.contactUser.id !== user.id) {
+        throw new UnauthorizedException();
+      }
+
+      contractManagement.status = status;
+      await this.contractManagementsRepository.save(contractManagement);
+
+      return {
+        message: 'Contract Status was updated successfully',
+        data: contractManagement,
       };
     } catch (error) {
       throw error;

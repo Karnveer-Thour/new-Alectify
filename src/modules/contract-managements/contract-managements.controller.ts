@@ -29,6 +29,8 @@ import {
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { UpdateContractManagementDto } from './dto/update-contract-management.dto';
 import { DeleteContractManagementDocumentDto } from './dto/delete-contract-management-document.dto';
+import { ContractManagement } from './entities/contract-management.entity';
+import { UpdateContractManagementStatusDto } from './dto/update-contract-management-status.dto';
 
 @ApiBearerAuth()
 @ApiTags('Contract Management')
@@ -133,6 +135,22 @@ export class ContractManagementsController {
       files,
     );
   }
+
+    @ApiOkResponse({
+      type: ContractManagement
+    })
+    @Patch('updateStatus/:id')
+    updateStatus(
+      @Req() req,
+      @Param('id') id: string,
+      @Body() UpdateContractManagementStatusDto:UpdateContractManagementStatusDto
+    ){
+      return this.contractManagementsService.updateStatus(
+        id,
+        req.user,
+        UpdateContractManagementStatusDto.status
+      );
+    }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
