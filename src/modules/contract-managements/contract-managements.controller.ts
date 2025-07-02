@@ -79,6 +79,7 @@ export class ContractManagementsController {
       orderField = null,
       orderBy = null,
       isActive = null,
+      status = null,
       isRecurring = null,
       search = null,
     }: GetAllContractManagementQueryDto,
@@ -90,6 +91,7 @@ export class ContractManagementsController {
       isActive,
       isRecurring,
       search,
+      status,
       orderField,
       orderBy,
       {

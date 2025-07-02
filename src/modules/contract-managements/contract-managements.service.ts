@@ -10,10 +10,7 @@ import { ProjectsService } from 'modules/projects/projects.service';
 import { UsersService } from 'modules/users/users.service';
 import { User } from 'modules/users/entities/user.entity';
 import { CreateContractManagementDto } from './dto/create-contract-management.dto';
-import {
-  ContractManagementResponseDto,
-  CreateContractManagementResponseDto,
-} from './dto/create-contract-management-response.dto';
+import { CreateContractManagementResponseDto } from './dto/create-contract-management-response.dto';
 import { dateToUTC } from '@common/utils/utils';
 import { ContractManagementsRepository } from './repositories/contract-managements.repository';
 import { ContractManagementDocumentsRepository } from './repositories/contract-management-documents.repository';
@@ -47,16 +44,16 @@ export class ContractManagementsService {
     private readonly operationApis: OperationApisWrapper,
   ) {}
 
- getEventStatus(endDate: Date): ContractManagementCalenderStatus | null {
-  const now = moment.utc();
-  const contractEndDate = moment.utc(endDate);
+  getEventStatus(endDate: Date): ContractManagementCalenderStatus | null {
+    const now = moment.utc();
+    const contractEndDate = moment.utc(endDate);
 
-  if (now.isAfter(contractEndDate)) {
-    return ContractManagementCalenderStatus.DELAYED;
+    if (now.isAfter(contractEndDate)) {
+      return ContractManagementCalenderStatus.DELAYED;
+    }
+
+    return null;
   }
-
-  return null;
-}
 
   async create(
     user: User,
@@ -165,6 +162,7 @@ export class ContractManagementsService {
     isActive: boolean | null,
     isRecurring: boolean | null,
     search: string | null,
+    status: ContractManagementStatusTypes | null,
     orderField: string | null,
     orderBy: ContractManagementsSortOrderEnum | null,
     options: IPaginationOptions,
@@ -194,6 +192,12 @@ export class ContractManagementsService {
       if (typeof isRecurring === 'boolean') {
         contractMangementRecords.andWhere('cm.isRecurring = :isRecurring', {
           isRecurring,
+        });
+      }
+
+      if (status) {
+        contractMangementRecords.andWhere('cm.status = :status', {
+          status,
         });
       }
 
@@ -297,7 +301,7 @@ export class ContractManagementsService {
         contract.endDate,
       );
 
-      contract['eventStatus'] =  this.getEventStatus(contract.endDate);
+      contract['eventStatus'] = this.getEventStatus(contract.endDate);
 
       return {
         message: 'Get Contract successfully',
